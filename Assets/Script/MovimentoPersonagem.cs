@@ -9,7 +9,7 @@ public class MovimentoPersonagem : MonoBehaviour
     
     private Rigidbody2D rb;
     private Animator anim; // Referência para o Animator
-    private bool estaNoChao;
+    private bool estaNoChao; // chao
     private bool estaNaEscada;
     private float gravidadeOriginal;
 
