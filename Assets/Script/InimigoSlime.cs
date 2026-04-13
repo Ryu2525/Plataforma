@@ -22,26 +22,35 @@ public class InimigoSlime : MonoBehaviour
     {
         if (estaNoChao)
         {
+            // Ativa o gatilho da animação de pulo
+            if (anim != null) anim.SetTrigger("pulou"); 
+
             // Aplica a força para cima e para frente
             rb.linearVelocity = new Vector2(forcaHorizontal, forcaPuloVertical);
             
-            // Ativa o gatilho da animação de pulo
-            anim.SetTrigger("pulou"); 
+            // Forçamos o estaNoChao a false para evitar pulos duplos no mesmo frame
+            estaNoChao = false;
         }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // Verifica se tocou na Layer "Chao"
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Chao"))
+        // Verifica se tocou na Layer "Chao" ou se tem a Tag "Ground"
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Chao") || collision.gameObject.CompareTag("Ground"))
         {
             estaNoChao = true;
+
+            // SOLUÇÃO PARA O DESLIZAMENTO: Zerar a velocidade ao cair
+            rb.linearVelocity = Vector2.zero;
+
+            // Ativa o gatilho para voltar à animação parado
+            if (anim != null) anim.SetTrigger("caiu");
         }
     }
 
     void OnCollisionExit2D(Collision2D collision)
     {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Chao"))
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Chao") || collision.gameObject.CompareTag("Ground"))
         {
             estaNoChao = false;
         }

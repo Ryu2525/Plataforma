@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Escada
   - Moeda
+  - Chao
   layers:
   - Default
   - TransparentFX
