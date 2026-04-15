@@ -31,7 +31,7 @@ public class InimigoSlime : MonoBehaviour
 
     public void ReceberDano(int dano, Vector2 forcaImpacto)
     {
-        vida -= dano;
+        vida -= dano; //test 
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(forcaImpacto, ForceMode2D.Impulse);
         

@@ -1,10 +1,10 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // Necessário para reiniciar a fase
+using UnityEngine.SceneManagement;
 
 public class GerenciadorJogo : MonoBehaviour
 {
     public GameObject telaVitoria;
-    public GameObject telaDerrota; // Arraste a nova tela aqui no Inspector
+    public GameObject telaDerrota;
 
     public void MostrarVitoria()
     {
@@ -20,13 +20,24 @@ public class GerenciadorJogo : MonoBehaviour
         if (telaDerrota != null)
         {
             telaDerrota.SetActive(true);
-            Time.timeScale = 0f; // Pausa o jogo na derrota
+            Time.timeScale = 0f; 
         }
     }
 
+    // Função atualizada para voltar ao menu inicial
     public void ReiniciarFase()
     {
-        Time.timeScale = 1f; // Despausa o jogo
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        Time.timeScale = 1f; // ADICIONE ESTA LINHA AQUI!
+        // Carrega a cena do menu principal
+        // O nome dentro das aspas deve ser exatamente igual ao arquivo na sua pasta Scenes
+        SceneManager.LoadScene("Home"); 
+    }
+
+    // Função que será chamada pelo botão
+    public void CarregarProximaFase()
+    {
+        // Carrega a cena pelo nome exato que você tem na pasta Scenes
+        Time.timeScale = 1f; // ADICIONE ESTA LINHA AQUI!
+        SceneManager.LoadScene("Fase2");
     }
 }
