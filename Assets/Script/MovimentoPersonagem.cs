@@ -1,17 +1,24 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 public class MovimentoPersonagem : MonoBehaviour
 {
+    [Header("Configurações de Movimento")]
     public float velocidade = 5f;
     public float velocidadeEscada = 3f;
     public float forcaPulo = 5f; 
     
+    [Header("Configurações de Ataque")]
+    public GameObject objetoAtaque; // Arraste o PontoDeAtaque aqui
+    public float tempoAtaqueAtivo = 0.2f;
+
     private Rigidbody2D rb;
-    private Animator anim; // Referência para o Animator
-    private bool estaNoChao; // chao
+    private Animator anim;
+    private bool estaNoChao;
     private bool estaNaEscada;
     private float gravidadeOriginal;
+    private bool sendoEmpurrado = false;
 
     public Transform verificadorChao; 
     public float raioVerificacao = 0.2f;
@@ -20,28 +27,38 @@ public class MovimentoPersonagem : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        anim = GetComponent<Animator>(); // Inicializa o Animator
+        anim = GetComponent<Animator>();
         gravidadeOriginal = rb.gravityScale;
+        
+        if(objetoAtaque != null) objetoAtaque.SetActive(false);
     }
 
     void Update()
     {
+        if (sendoEmpurrado) return;
+
         var teclado = Keyboard.current;
         float movimentoHorizontal = 0f;
+
+        // Lógica de Ataque
+        if (teclado.enterKey.wasPressedThisFrame)
+        {
+            Atacar();
+        }
 
         // Movimento Esquerda/Direita
         if (teclado.dKey.isPressed) 
         {
             movimentoHorizontal = 1f;
-            transform.localScale = new Vector3(0.5f, 0.5f, 1); // Vira para direita
+            transform.localScale = new Vector3(0.5f, 0.5f, 1);
         }
         else if (teclado.aKey.isPressed) 
         {
             movimentoHorizontal = -1f;
-            transform.localScale = new Vector3(-0.5f, 0.5f, 1); // Vira para esquerda
+            transform.localScale = new Vector3(-0.5f, 0.5f, 1);
         }
 
-        // 1. Lógica de Movimentação (Chão vs Escada)
+        // Movimentação (Escada vs Chão)
         if (estaNaEscada)
         {
             float movimentoVertical = 0f;
@@ -50,7 +67,6 @@ public class MovimentoPersonagem : MonoBehaviour
 
             rb.gravityScale = 0f;
             rb.linearVelocity = new Vector2(movimentoHorizontal * velocidade, movimentoVertical * velocidadeEscada);
-            
         }
         else
         {
@@ -58,51 +74,51 @@ public class MovimentoPersonagem : MonoBehaviour
             rb.linearVelocity = new Vector2(movimentoHorizontal * velocidade, rb.linearVelocity.y);
         }
 
-        // 2. Lógica de Pulo
-        if (teclado.spaceKey.wasPressedThisFrame)
+        // Pulo
+        if (teclado.spaceKey.wasPressedThisFrame && (estaNoChao || estaNaEscada))
         {
-            if (estaNoChao || estaNaEscada)
-            {
-                estaNaEscada = false; 
-                rb.gravityScale = gravidadeOriginal;
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, forcaPulo);
-            }
+            estaNaEscada = false; 
+            rb.gravityScale = gravidadeOriginal;
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, forcaPulo);
         }
 
-        // 3. Verificação constante do chão
         estaNoChao = Physics2D.OverlapCircle(verificadorChao.position, raioVerificacao, layerChao);
 
-        // --- ENVIAR DADOS PARA O ANIMATOR ---
-        
-        // Passa a velocidade horizontal (sempre positiva) para o parâmetro "velocidade"
+        // Animator
         anim.SetFloat("velocidade", Mathf.Abs(movimentoHorizontal));
-
-        // Define se está pulando para o parâmetro "estaPulando"
-        // Se NÃO está no chão e NÃO está na escada, ele está no ar
         anim.SetBool("estaPulando", !estaNoChao && !estaNaEscada);
     }
 
+    void Atacar()
+    {
+        anim.SetTrigger("atacar");
+        if (objetoAtaque != null) StartCoroutine(AtivarColisorAtaque());
+    }
+
+    IEnumerator AtivarColisorAtaque()
+    {
+        objetoAtaque.SetActive(true);
+        yield return new WaitForSeconds(tempoAtaqueAtivo);
+        objetoAtaque.SetActive(false);
+    }
+
+    public void AplicarKnockback(Vector2 forca)
+    {
+        sendoEmpurrado = true;
+        rb.linearVelocity = Vector2.zero;
+        rb.AddForce(forca, ForceMode2D.Impulse);
+        Invoke(nameof(ResetarKnockback), 0.2f);
+    }
+
+    void ResetarKnockback() { sendoEmpurrado = false; }
+
+    // Detecção de Escada
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Escada") || collision.gameObject.layer == LayerMask.NameToLayer("Escada"))
-        {
-            estaNaEscada = true;
-        }
+        if (collision.CompareTag("Escada")) estaNaEscada = true;
     }
-
-    private void OnTriggerStay2D(Collider2D collision)
-    {
-        if (collision.CompareTag("Escada") || collision.gameObject.layer == LayerMask.NameToLayer("Escada"))
-        {
-            estaNaEscada = true;
-        }
-    }
-
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.CompareTag("Escada") || collision.gameObject.layer == LayerMask.NameToLayer("Escada"))
-        {
-            estaNaEscada = false;
-        }
+        if (collision.CompareTag("Escada")) estaNaEscada = false;
     }
 }
